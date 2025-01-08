@@ -1,0 +1,55 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+android {
+    namespace = "com.example.beautyhaven"
+    compileSdk = flutter.compileSdkVersion // Используем версию SDK из Flutter.
+
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8" // Явно указываем JVM таргет.
+    }
+
+    defaultConfig {
+        applicationId = "com.example.beautyhaven"
+        minSdk = 23 // Обновляем минимальную версию SDK.
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.debug // Используем debug-сертификаты для тестирования.
+            // Оптимизации для релизной сборки.
+            minifyEnabled false
+            shrinkResources false
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
+
+dependencies {
+    // Зависимости Google Play Services.
+    implementation platform('com.google.firebase:firebase-bom:32.0.0')
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-core'
+    implementation 'com.google.firebase:firebase-core:21.1.1' // Укажите последнюю доступную версию.
+
+}
+
+// Подключение плагина Google Services.
+apply plugin: 'com.google.gms.google-services'

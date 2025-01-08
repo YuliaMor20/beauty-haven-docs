@@ -1,0 +1,37 @@
+name: beautyhaven
+description: "A Flutter project for a beauty salon app."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  sqflite: ^2.2.8  # Работа с локальной базой данных
+  path_provider: ^2.0.14  # Работа с файловой системой
+  image_picker: ^1.1.2  # Работа с выбором изображений
+  intl: ^0.19.0
+  # Локализация и работа с датами
+  firebase_core: ^3.10.0  # Базовые функции Firebase
+  firebase_auth: ^5.4.0  # Аутентификация через Firebase
+  provider: ^6.1.2  # Управление состоянием
+  shared_preferences: ^2.1.0  # Хранение данных локально
+  google_fonts: ^6.2.1  # Использование шрифтов Google
+  font_awesome_flutter: ^10.4.0  # Иконки Font Awesome
+  url_launcher: ^6.1.7  # Открытие ссылок и приложений
+  path: ^1.9.0  # Работа с путями
+  flutter_localizations:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0  # Рекомендации по написанию кода
+
+flutter:
+  assets:
+    - assets/  # Папка для ресурсов (убедитесь, что она существует)
+  uses-material-design: true
