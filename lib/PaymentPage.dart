@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'database_helper.dart';
 
 class PaymentFormPage extends StatefulWidget {
@@ -75,6 +76,11 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
               TextFormField(
                 controller: _cardNumberController,
                 keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(16),
+                  CardNumberInputFormatter(),
+                ],
                 decoration: const InputDecoration(
                   labelText: 'Номер карты',
                   hintText: '0000 0000 0000 0000',
@@ -94,6 +100,11 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
               TextFormField(
                 controller: _expiryDateController,
                 keyboardType: TextInputType.datetime,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(4),
+                  ExpiryDateInputFormatter(),
+                ],
                 decoration: const InputDecoration(
                   labelText: 'Дата действия (MM/YY)',
                   hintText: 'MM/YY',
@@ -104,9 +115,7 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
                     return 'Введите дату действия';
                   }
                   final parts = value.split('/');
-                  if (parts.length != 2 ||
-                      parts[0].length != 2 ||
-                      parts[1].length != 2) {
+                  if (parts.length != 2 || parts[0].length != 2 || parts[1].length != 2) {
                     return 'Введите дату в формате MM/YY';
                   }
                   final month = int.tryParse(parts[0]);
@@ -155,6 +164,44 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Форматтер для ввода номера карты
+class CardNumberInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    final text = newValue.text.replaceAll(' ', '');
+    final buffer = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      if (i % 4 == 0 && i != 0) {
+        buffer.write(' ');
+      }
+      buffer.write(text[i]);
+    }
+    return TextEditingValue(
+      text: buffer.toString(),
+      selection: TextSelection.collapsed(offset: buffer.length),
+    );
+  }
+}
+
+/// Форматтер для ввода даты истечения карты (MM/YY)
+class ExpiryDateInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    final text = newValue.text.replaceAll('/', '');
+    final buffer = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      if (i == 2) {
+        buffer.write('/');
+      }
+      buffer.write(text[i]);
+    }
+    return TextEditingValue(
+      text: buffer.toString(),
+      selection: TextSelection.collapsed(offset: buffer.length),
     );
   }
 }
