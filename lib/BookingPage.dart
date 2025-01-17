@@ -29,6 +29,7 @@ class _BookingPageState extends State<BookingPage> {
     super.initState();
     _masters = [];
     _unavailableSlots = [];
+    _timeSlots = [];
     _nameController = TextEditingController();
     _phoneController = TextEditingController();
   }
@@ -36,7 +37,6 @@ class _BookingPageState extends State<BookingPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _timeSlots = _generateTimeSlots(widget.service['duration']);
     _loadMasters();
     _loadUserData();
   }
@@ -68,33 +68,35 @@ class _BookingPageState extends State<BookingPage> {
     }
   }
 
-  List<String> _generateTimeSlots(String duration) {
+  List<String> _generateTimeSlots(String duration, DateTime selectedDate) {
     final List<String> slots = [];
     final serviceDuration = int.parse(duration);
 
-    // Если дата не выбрана, используем текущую
     final now = DateTime.now();
-    final currentDate = _selectedDate ?? now;
-
-    const startTime = TimeOfDay(hour: 10, minute: 0);
-    const endTime = TimeOfDay(hour: 22, minute: 0);
+    final startTime = TimeOfDay(hour: 10, minute: 0);
+    final endTime = TimeOfDay(hour: 22, minute: 0);
 
     TimeOfDay current = startTime;
 
     while (current.hour < endTime.hour ||
         (current.hour == endTime.hour && current.minute < endTime.minute)) {
       final slotTime = DateTime(
-        currentDate.year,
-        currentDate.month,
-        currentDate.day,
+        selectedDate.year,
+        selectedDate.month,
+        selectedDate.day,
         current.hour,
         current.minute,
       );
 
-      // Добавляем слот, если:
-      // - выбранный день — текущий, и слот позже текущего времени
-      // - выбранный день — будущий
-      if (currentDate.isAfter(now) || (currentDate.isAtSameMomentAs(now) && slotTime.isAfter(now))) {
+      // Если выбранная дата совпадает с текущей, исключаем слоты до текущего времени
+      if (selectedDate.year == now.year &&
+          selectedDate.month == now.month &&
+          selectedDate.day == now.day) {
+        if (slotTime.isAfter(now)) {
+          slots.add(current.format(context));
+        }
+      } else {
+        // Для будущих дат добавляем все слоты
         slots.add(current.format(context));
       }
 
@@ -106,7 +108,9 @@ class _BookingPageState extends State<BookingPage> {
     }
 
     return slots;
-  }
+
+
+}
 
   Future<void> _loadUnavailableSlots(DateTime date) async {
     final formattedDate = DateFormat('yyyy-MM-dd').format(date);
@@ -114,6 +118,9 @@ class _BookingPageState extends State<BookingPage> {
 
     setState(() {
       _unavailableSlots = bookings.map((b) => b['time'] as String).toList();
+      _timeSlots = _generateTimeSlots(widget.service['duration'], date)
+          .where((slot) => !_unavailableSlots.contains(slot))
+          .toList();
     });
   }
 
@@ -218,7 +225,6 @@ class _BookingPageState extends State<BookingPage> {
                 if (selectedDate != null) {
                   setState(() {
                     _selectedDate = selectedDate;
-                    _timeSlots = _generateTimeSlots(widget.service['duration']);
                   });
                   await _loadUnavailableSlots(selectedDate);
                 }
