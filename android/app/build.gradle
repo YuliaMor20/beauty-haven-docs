@@ -5,6 +5,22 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+def signingPropertiesFile = rootProject.file("release-signing.properties")
+def signingProperties = [:]
+
+if (signingPropertiesFile.exists()) {
+    signingPropertiesFile.withReader { reader ->
+        reader.eachLine { line ->
+            def keyValue = line.split('=')
+            if (keyValue.length == 2) {
+                signingProperties[keyValue[0].trim()] = keyValue[1].trim()
+            }
+        }
+    }
+} else {
+    println "Warning: release-signing.properties file not found!"
+}
+
 android {
     namespace = "com.example.beautyhaven"
     compileSdk = flutter.compileSdkVersion // Используем версию SDK из Flutter.
@@ -22,18 +38,31 @@ android {
 
     defaultConfig {
         applicationId = "com.example.beautyhaven"
-        minSdk = 23 // Обновляем минимальную версию SDK.
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        minSdkVersion 23
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode flutter.versionCode
+        versionName flutter.versionName
+    }
+
+    signingConfigs {
+        release {
+            if (signingProperties['storeFile']) {
+                storeFile file(signingProperties['storeFile'])
+                storePassword signingProperties['storePassword']
+                keyAlias signingProperties['keyAlias']
+                keyPassword signingProperties['keyPassword']
+            } else {
+                println "Warning: Signing properties are missing or incomplete!"
+            }
+        }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug // Используем debug-сертификаты для тестирования.
-            // Оптимизации для релизной сборки.
-            minifyEnabled false
-            shrinkResources false
+            signingConfig signingConfigs.release
+            minifyEnabled true // Оптимизация
+            shrinkResources true // Удаление неиспользуемых ресурсов
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
@@ -48,7 +77,6 @@ dependencies {
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-core'
     implementation 'com.google.firebase:firebase-core:21.1.1' // Укажите последнюю доступную версию.
-
 }
 
 // Подключение плагина Google Services.

@@ -18,8 +18,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
   final _formKey = GlobalKey<FormState>();
 
-  String _selectedRole = 'client'; // Роль по умолчанию
-
   void _register() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -33,14 +31,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
     final dbHelper = DatabaseHelper();
     try {
-      // Регистрируем пользователя с указанной ролью
+      // Регистрируем пользователя с ролью клиента
       await dbHelper.registerUser(
         username,
         password,
         fullName,
         email,
         phone,
-        role: _selectedRole,
+        role: 'client',
       );
       Navigator.pushReplacement(
         context,
@@ -196,34 +194,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           }
                           return null;
                         },
-                      ),
-                      const SizedBox(height: 16),
-                      // Выбор роли
-                      DropdownButtonFormField<String>(
-                        value: _selectedRole,
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'client',
-                            child: Text('Клиент'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'admin',
-                            child: Text('Администратор'),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedRole = value!;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          labelText: 'Выберите роль',
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                        ),
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton(

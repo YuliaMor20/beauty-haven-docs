@@ -28,7 +28,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 10, // Увеличена версия для добавления нового столбца
+      version: 12,
       onCreate: (db, version) async {
         await _createUsersTable(db);
         await _createMastersTable(db);
@@ -37,25 +37,38 @@ class DatabaseHelper {
         await _createCosmeticsTable(db);
         await _createCartTable(db);
         await _createOrdersTable(db);
+        await _createReviewsTable(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 10) {
-          await _addCategoryToServicesTable(db);
+        if (oldVersion < 12) {
+          await _createReviewsTable(db);
         }
       },
     );
   }
-  Future<void> _addCategoryToServicesTable(Database db) async {
+
+  Future<void> _createReviewsTable(Database db) async {
     try {
-      await db.execute("ALTER TABLE services ADD COLUMN category TEXT");
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS reviews (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          master_name TEXT NOT NULL,
+          service_name TEXT NOT NULL,
+          date TEXT NOT NULL,
+          user_id INTEGER NOT NULL,
+          rating INTEGER NOT NULL,
+          comment TEXT,
+          UNIQUE(user_id, service_name, date)
+        )
+      ''');
     } catch (e) {
-      print('Error adding category column to services: $e');
+      print('Ошибка создания таблицы reviews: $e');
     }
   }
 
   Future<void> _createUsersTable(Database db) async {
     await db.execute('''
-      CREATE TABLE users (
+      CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
@@ -67,18 +80,9 @@ class DatabaseHelper {
     ''');
   }
 
-
-  Future<void> _addRoleToUsersTable(Database db) async {
-    try {
-      await db.execute("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'client'");
-    } catch (e) {
-      print('Столбец role уже существует или ошибка: $e');
-    }
-  }
-
   Future<void> _createMastersTable(Database db) async {
     await db.execute('''
-      CREATE TABLE masters (
+      CREATE TABLE IF NOT EXISTS masters (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
         category TEXT,
@@ -92,22 +96,20 @@ class DatabaseHelper {
 
   Future<void> _createServicesTable(Database db) async {
     await db.execute('''
-      CREATE TABLE services (
+      CREATE TABLE IF NOT EXISTS services (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
-        category TEXT, -- Добавлено для фильтрации мастеров по категориям
+        category TEXT,
         duration TEXT,
         price REAL,
         image TEXT
-        ALTER TABLE services ADD COLUMN category TEXT;
-
       )
     ''');
   }
 
   Future<void> _createBookingsTable(Database db) async {
     await db.execute('''
-      CREATE TABLE bookings (
+      CREATE TABLE IF NOT EXISTS bookings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         name TEXT,
@@ -123,7 +125,7 @@ class DatabaseHelper {
 
   Future<void> _createCosmeticsTable(Database db) async {
     await db.execute('''
-      CREATE TABLE cosmetics (
+      CREATE TABLE IF NOT EXISTS cosmetics (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         price REAL NOT NULL,
@@ -134,7 +136,7 @@ class DatabaseHelper {
 
   Future<void> _createCartTable(Database db) async {
     await db.execute('''
-      CREATE TABLE cart (
+      CREATE TABLE IF NOT EXISTS cart (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         price REAL NOT NULL,
@@ -144,9 +146,10 @@ class DatabaseHelper {
     ''');
   }
 
+
   Future<void> _createOrdersTable(Database db) async {
     await db.execute('''
-      CREATE TABLE orders (
+      CREATE TABLE IF NOT EXISTS orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         items TEXT NOT NULL,
@@ -155,6 +158,59 @@ class DatabaseHelper {
         FOREIGN KEY (user_id) REFERENCES users (id)
       )
     ''');
+  }
+
+
+
+  Future<void> _addRoleToUsersTable(Database db) async {
+    try {
+      await db.execute("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'client'");
+    } catch (e) {
+      print('Столбец role уже существует или ошибка: $e');
+    }
+  }
+
+
+
+  Future<int> addReview({
+    required String masterName,
+    required String serviceName,
+    required String date,
+    required int userId,
+    required int rating,
+    String? comment,
+  }) async {
+    final db = await database;
+    return await db.insert('reviews', {
+      'master_name': masterName,
+      'service_name': serviceName,
+      'date': date,
+      'user_id': userId,
+      'rating': rating,
+      'comment': comment,
+    });
+  }
+  Future<bool> hasReview({
+    required String serviceName,
+    required String date,
+    required int userId,
+  }) async {
+    final db = await database;
+    final result = await db.query(
+      'reviews',
+      where: 'service_name = ? AND date = ? AND user_id = ?',
+      whereArgs: [serviceName, date, userId],
+    );
+    return result.isNotEmpty;
+  }
+
+  Future<List<Map<String, dynamic>>> getReviewsByMaster(String masterName) async {
+    final db = await database;
+    return await db.query(
+      'reviews',
+      where: 'master_name = ?',
+      whereArgs: [masterName],
+    );
   }
 
 
@@ -388,6 +444,8 @@ class DatabaseHelper {
       where: 'user_id = ?',
       whereArgs: [userId],
     );
+
+
   }
 
   Future<List<Map<String, dynamic>>> getUserOrders(int userId) async {
@@ -419,5 +477,9 @@ class DatabaseHelper {
       whereArgs: [userId],
     );
     return result.isNotEmpty ? result.first : null;
+  }
+  Future<List<Map<String, dynamic>>> getBookings() async {
+    final db = await database;
+    return await db.query('bookings', orderBy: 'date ASC, time ASC');
   }
 }

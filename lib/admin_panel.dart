@@ -51,7 +51,7 @@ class _AdminPanelPageState extends State<AdminPanelPage> {
                   subtitle: Text('Роль: ${user['role']}'),
                   trailing: DropdownButton<String>(
                     value: user['role'],
-                    items: ['admin', 'client']
+                    items: ['admin', 'client', 'master'] // Добавлена роль мастер
                         .map((role) => DropdownMenuItem(
                       value: role,
                       child: Text(role),

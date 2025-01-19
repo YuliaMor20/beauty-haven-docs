@@ -13,6 +13,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
+import 'SchedulePage.dart';
+import 'DocumentationPage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -98,6 +100,7 @@ class _MainScreenState extends State<MainScreen> {
     ServicesPage(),
     CosmeticsPage(),
     CartPage(),
+    SizedBox.shrink(),
   ];
 
   @override
@@ -125,6 +128,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false, // Убираем стрелку назад
         backgroundColor: const Color(0xFFF1BFBE),
         title: Text(
           'Beauty Haven',
@@ -147,6 +151,17 @@ class _MainScreenState extends State<MainScreen> {
               },
             ),
           ],
+          if (_userRole == 'master') ...[
+            IconButton(
+              icon: const Icon(Icons.schedule),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SchedulePage()),
+                );
+              },
+            ),
+          ],
           IconButton(
             icon: const Icon(Icons.account_circle),
             onPressed: () async {
@@ -164,8 +179,15 @@ class _MainScreenState extends State<MainScreen> {
         onTap: (index) {
           setState(() {
             _currentIndex = index;
+            if (index == 5) { // Индекс документации
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const DocumentationPage()),
+              );
+            }
           });
         },
+
         selectedItemColor: Colors.brown,
         unselectedItemColor: Colors.grey,
         backgroundColor: const Color(0xFFF1BFBE),
@@ -190,8 +212,15 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.shopping_cart),
             label: 'Корзина',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.info),
+            label: 'Документация',
+          ),
         ],
-      ),
+
+
+
+    ),
     );
   }
 }
@@ -339,6 +368,7 @@ class ContactInfo extends StatelessWidget {
           ),
         ],
       ),
+
     );
   }
 }
